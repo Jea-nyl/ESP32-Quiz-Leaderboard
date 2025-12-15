@@ -6,7 +6,7 @@
 <title>Quiz Leaderboard</title>
 <style>
   body { 
-    font-family: Arial, sans-serif; 
+    font-family: Arial; 
     background: #f0f0f0; 
     text-align: center; 
     padding: 50px; 
@@ -20,16 +20,8 @@
     background: #fff;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
   }
-  th, td { 
-    border: 1px solid #333; 
-    padding: 12px; 
-    text-align: center; 
-  }
-  th { 
-    background: #333; 
-    color: #fff; 
-    font-size: 16px;
-  }
+  th, td { border: 1px solid #333; padding: 12px; text-align: center; }
+  th { background: #333; color: #fff; font-size: 16px; }
   td { font-size: 14px; }
   tr:nth-child(even) { background: #f2f2f2; }
 </style>
@@ -45,55 +37,59 @@
       <th>Time</th>
     </tr>
   </thead>
-  <tbody>
-    <!-- Scores will be populated here -->
-  </tbody>
+  <tbody></tbody>
 </table>
 
-<script>
-  const FIREBASE_URL = "https://esp32-guizgame-default-rtdb.firebaseio.com/scores.json"; // Replace with your Firebase DB URL
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-database.js";
 
-  async function loadLeaderboard() {
-    try {
-      const response = await fetch(FIREBASE_URL);
-      const data = await response.json();
+  // ====== Your Firebase Config ======
+  const firebaseConfig = {
+    apiKey: "AIzaSyCQ25Rc6WfzZlJh4if0esmRvuz9Iu_T3dc",
+    authDomain: "esp32-guizgame.firebaseapp.com",
+    databaseURL: "https://esp32-guizgame-default-rtdb.firebaseio.com",
+    projectId: "esp32-guizgame",
+    storageBucket: "esp32-guizgame.firebasestorage.app",
+    messagingSenderId: "633925751720",
+    appId: "1:633925751720:web:bed4df97e678ab3ae7c39d"
+  };
 
-      if (!data) return; // No scores yet
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
 
-      const scores = [];
+  // Reference to 'scores' node
+  const scoresRef = ref(database, 'scores');
 
-      // Loop through each unique Firebase push key
-      for (const key in data) {
-        if (data.hasOwnProperty(key)) {
-          scores.push({
-            name: data[key].name || "Player",
-            score: data[key].score || 0,
-            timestamp: data[key].timestamp || 0
-          });
-        }
+  // Listen for changes and update leaderboard
+  onValue(scoresRef, (snapshot) => {
+    const data = snapshot.val();
+    const scores = [];
+    for (const key in data) {
+      if (data.hasOwnProperty(key)) {
+        scores.push({
+          name: data[key].name || "Player",
+          score: data[key].score || 0,
+          timestamp: data[key].timestamp || 0
+        });
       }
-
-      // Sort descending by score
-      scores.sort((a, b) => b.score - a.score);
-
-      // Populate table
-      const tbody = document.querySelector("#leaderboard tbody");
-      tbody.innerHTML = "";
-      scores.forEach((entry, idx) => {
-        const date = new Date(entry.timestamp);
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${idx + 1}</td><td>${entry.name}</td><td>${entry.score}</td><td>${date.toLocaleString()}</td>`;
-        tbody.appendChild(tr);
-      });
-
-    } catch (error) {
-      console.error("Error loading leaderboard:", error);
     }
-  }
 
-  // Load leaderboard initially and refresh every 5 seconds
-  loadLeaderboard();
-  setInterval(loadLeaderboard, 5000);
+    // Sort descending
+    scores.sort((a, b) => b.score - a.score);
+
+    // Populate table
+    const tbody = document.querySelector("#leaderboard tbody");
+    tbody.innerHTML = "";
+    scores.forEach((entry, idx) => {
+      const date = new Date(entry.timestamp);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${idx+1}</td><td>${entry.name}</td><td>${entry.score}</td><td>${date.toLocaleString()}</td>`;
+      tbody.appendChild(tr);
+    });
+  });
 </script>
 </body>
 </html>
