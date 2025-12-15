@@ -5,26 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Quiz Score Dashboard</title>
 <style>
-  body { 
-    font-family: Arial; 
-    background: #f0f0f0; 
-    text-align: center; 
-    padding: 50px; 
-  }
+  body { font-family: Arial; background: #f0f0f0; text-align: center; padding: 50px; }
   h1 { color: #333; }
-  table { 
-    margin: auto; 
-    border-collapse: collapse; 
-    width: 50%; 
-    max-width: 400px; 
-    background: #fff;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  }
+  table { margin: auto; border-collapse: collapse; width: 50%; max-width: 400px; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
   th, td { border: 1px solid #333; padding: 12px; text-align: center; }
   th { background: #333; color: #fff; font-size: 16px; }
   td { font-size: 14px; }
   tr:nth-child(even) { background: #f2f2f2; }
-  .latest { background: #ffeb3b !important; font-weight: bold; } /* Highlight latest score */
+  .latest { background: #ffeb3b !important; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -39,12 +27,10 @@
   <tbody></tbody>
 </table>
 
-<!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js";
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.24.0/firebase-database.js";
 
-// ===== Firebase Config =====
 const firebaseConfig = {
   apiKey: "AIzaSyCQ25Rc6WfzZlJh4if0esmRvuz9Iu_T3dc",
   authDomain: "esp32-guizgame.firebaseapp.com",
@@ -55,12 +41,10 @@ const firebaseConfig = {
   appId: "1:633925751720:web:bed4df97e678ab3ae7c39d"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const scoresRef = ref(database, 'scores');
 
-// Listen for changes
 onValue(scoresRef, (snapshot) => {
   const data = snapshot.val();
   if (!data) return;
@@ -68,22 +52,17 @@ onValue(scoresRef, (snapshot) => {
   const scores = [];
   for (const key in data) {
     if (data.hasOwnProperty(key)) {
-      scores.push({
-        key: key,
-        score: data[key].score || 0
-      });
+      if (data[key].score === undefined || data[key].score === null) continue; // allow 0
+      scores.push({ key: key, score: data[key].score });
     }
   }
 
-  // Sort descending by score
-  scores.sort((a, b) => b.score - a.score);
+  scores.sort((a,b) => b.score - a.score); // descending
 
-  // Find latest score by Firebase key (the last pushed one)
-  const latestKey = Object.keys(data).pop();
-
-  // Populate table
+  const latestKey = Object.keys(data).pop(); // latest submitted score
   const tbody = document.querySelector("#leaderboard tbody");
   tbody.innerHTML = "";
+
   scores.forEach((entry, idx) => {
     const tr = document.createElement("tr");
     if(entry.key === latestKey) tr.classList.add("latest");
