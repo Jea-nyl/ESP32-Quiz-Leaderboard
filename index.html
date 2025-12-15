@@ -21,6 +21,7 @@
   <thead>
     <tr>
       <th>Rank</th>
+      <th>Name</th>
       <th>Score</th>
     </tr>
   </thead>
@@ -42,12 +43,10 @@ const firebaseConfig = {
   appId: "1:633925751720:web:bed4df97e678ab3ae7c39d"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const scoresRef = ref(database, 'scores');
 
-// Listen for live changes
 onValue(scoresRef, (snapshot) => {
   const data = snapshot.val();
   if (!data) return;
@@ -55,7 +54,7 @@ onValue(scoresRef, (snapshot) => {
   const scores = [];
   for (const key in data) {
     if (data.hasOwnProperty(key) && data[key].score !== undefined && data[key].score !== null) {
-      scores.push({ key: key, score: data[key].score });
+      scores.push({ key: key, name: data[key].name || "Anonymous", score: data[key].score });
     }
   }
 
@@ -71,7 +70,7 @@ onValue(scoresRef, (snapshot) => {
   scores.forEach((entry, idx) => {
     const tr = document.createElement("tr");
     if(entry.key === latestKey) tr.classList.add("latest");
-    tr.innerHTML = `<td>${idx+1}</td><td>${entry.score}</td>`;
+    tr.innerHTML = `<td>${idx+1}</td><td>${entry.name}</td><td>${entry.score}</td>`;
     tbody.appendChild(tr);
   });
 });
