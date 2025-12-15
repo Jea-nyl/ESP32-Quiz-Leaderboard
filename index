@@ -5,52 +5,65 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Quiz Leaderboard</title>
 <style>
-  body { font-family: Arial; background: #f0f0f0; text-align: center; padding: 50px;}
-  table { margin: auto; border-collapse: collapse; width: 60%; }
-  th, td { border: 1px solid #333; padding: 10px; }
-  th { background: #333; color: #fff; }
+body { font-family: Arial; background: #f0f0f0; text-align: center; padding: 50px; }
+table { margin: auto; border-collapse: collapse; width: 60%; }
+th, td { border: 1px solid #333; padding: 10px; }
+th { background: #333; color: #fff; }
 </style>
 </head>
 <body>
 <h1>Quiz Leaderboard</h1>
 <table id="leaderboard">
   <thead>
-    <tr>
-      <th>Rank</th>
-      <th>Score</th>
-      <th>Timestamp</th>
-    </tr>
+    <tr><th>Rank</th><th>Name</th><th>Score</th><th>Time</th></tr>
   </thead>
-  <tbody>
-  </tbody>
+  <tbody></tbody>
 </table>
 
 <script>
-const FIREBASE_URL = "https://yourproject.firebaseio.com/scores.json";
+const FIREBASE_URL = "https://esp32-guizgame-default-rtdb.firebaseio.com/scores.json"; // your Firebase DB URL
 
 async function loadLeaderboard() {
-  const response = await fetch(FIREBASE_URL);
-  const data = await response.json();
-  const scores = [];
+  try {
+    const response = await fetch(FIREBASE_URL);
+    const data = await response.json();
 
-  for(const key in data){
-    scores.push({score: data[key].score, timestamp: data[key].timestamp});
+    if (!data) return; // no scores yet
+
+    const scores = [];
+
+    // Loop through each push key
+    for (const key in data) {
+      if (data.hasOwnProperty(key)) {
+        scores.push({
+          name: data[key].name || "Player",
+          score: data[key].score || 0,
+          timestamp: data[key].timestamp || 0
+        });
+      }
+    }
+
+    // Sort descending by score
+    scores.sort((a, b) => b.score - a.score);
+
+    const tbody = document.querySelector("#leaderboard tbody");
+    tbody.innerHTML = "";
+
+    scores.forEach((entry, idx) => {
+      const date = new Date(entry.timestamp);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${idx+1}</td><td>${entry.name}</td><td>${entry.score}</td><td>${date.toLocaleString()}</td>`;
+      tbody.appendChild(tr);
+    });
+
+  } catch (error) {
+    console.error("Error loading leaderboard:", error);
   }
-
-  // Sort descending
-  scores.sort((a,b) => b.score - a.score);
-
-  const tbody = document.querySelector("#leaderboard tbody");
-  tbody.innerHTML = "";
-  scores.forEach((entry, idx) => {
-    const date = new Date(entry.timestamp);
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${idx+1}</td><td>${entry.score}</td><td>${date.toLocaleString()}</td>`;
-    tbody.appendChild(tr);
-  });
 }
 
+// Refresh every 5 seconds
 loadLeaderboard();
+setInterval(loadLeaderboard, 5000);
 </script>
 </body>
 </html>
